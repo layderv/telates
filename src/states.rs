@@ -29,8 +29,8 @@ pub struct RunState {
     pub chat_id: i64,
     pub subscriptions: Vec<String>,
     pub refresh_rate: Duration,
-    pub saved: Vec<u64>,
-    pub last_msg_id: Option<u64>,
+    pub saved: Vec<usize>,
+    pub last_msg_id: Option<usize>,
     pub last_refresh: Option<DateTime<Utc>>,
 }
 

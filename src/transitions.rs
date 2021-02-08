@@ -48,7 +48,7 @@ async fn run(mut state: RunState, cx: TransitionIn, ans: String) -> TransitionOu
             }
         }
         "/save" => {
-            match cmd.get(1).map(|n| n.parse::<u64>()) {
+            match cmd.get(1).map(|n| n.parse::<usize>()) {
                 Some(Ok(id)) if id < state.last_msg_id.unwrap_or(0) => {
                     state.saved.push(id);
                     cx.answer_str("saved!").await?;
@@ -59,7 +59,23 @@ async fn run(mut state: RunState, cx: TransitionIn, ans: String) -> TransitionOu
             }
         }
         "/subscriptions" => {
-            cx.answer_str(format!("your subscriptions: \n{}", state.subscriptions.join("\n"))).await?;
+            let subs = state.subscriptions.iter()
+                .enumerate()
+                .map(|(idx, item)| format!("{}: {}", idx, item))
+                .collect::<Vec<String>>()
+                .join("\n");
+            cx.answer_str(format!("your subscriptions: \n{}", subs)).await?;
+        }
+        "/unsubscribe" => {
+            match cmd.get(1).map(|n| n.parse::<usize>()) {
+                Some(Ok(id)) => {
+                    state.subscriptions.remove(id);
+                    cx.answer_str("removed").await?;
+                }
+                _ => {
+                    cx.answer_str("Usage: /unsubscribe <id>").await?;
+                }
+            }
         }
         _ => ()
     }
