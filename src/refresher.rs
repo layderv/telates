@@ -63,7 +63,7 @@ impl Refresher {
             .map(|d| bincode::deserialize(&d).map_err(RedisStorageError::SerdeError))
             .transpose()
             .unwrap_or(None);
-        log::debug!("deserialized: {:X?}; serialized", deserialized);
+        log::debug!("deserialized: {:X?}", deserialized);
         if let Some(d) = deserialized {
             if let Dialogue::Run(state) = d {
                 return Ok(state)

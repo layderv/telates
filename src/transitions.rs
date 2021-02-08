@@ -9,6 +9,7 @@ use bytes::Bytes;
 use crate::client::Client;
 use rss::validation::Validate;
 
+const MAX_SUBSCRIPTIONS: usize = 100;
 static INTERNAL_IP_SPACE_RE: SyncLazy<Regex> = SyncLazy::new(||
     Regex::new(r"/(^127\.)|(^192\.168\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^::1$)|(^[fF][cCdD])/").unwrap()
 );
@@ -36,13 +37,25 @@ async fn run(mut state: RunState, cx: TransitionIn, ans: String) -> TransitionOu
         "/subscribe" => {
             let url = cmd.get(1);
             match url {
-                Some(url) if validate_url(*url).await && state.subscriptions.len() < 10 => {
-                    state.subscriptions.push(String::from(*url));
-                    log::debug!("subscribed to: {}", *url);
-                    cx.answer_str(format!("subscribed to: {}", url)).await?;
+                Some(url) => {
+                    let url_s = String::from(*url);
+                    if !validate_url(*url).await {
+                        log::debug!("{}> invalid url: {}", state.chat_id, url_s);
+                        cx.answer_str("invalid url").await?;
+                    } else if state.subscriptions.contains(&url_s) {
+                        log::debug!("{}> already subscribed: {}", state.chat_id, url_s);
+                        cx.answer_str("already subscribed").await?;
+                    } else if state.subscriptions.len() >= MAX_SUBSCRIPTIONS {
+                        log::debug!("{}> too many subscriptions, cannot subscribe: {}", state.chat_id, url_s);
+                        cx.answer_str("too many subscriptions").await?;
+                    } else {
+                        state.subscriptions.push(url_s);
+                        log::debug!("{}> subscribed to: {}", state.chat_id, *url);
+                        cx.answer_str(format!("subscribed to: {}", url)).await?;
+                    }
                 }
                 _ => {
-                    log::debug!("{}", format!("invalid url: {}", cmd.get(1).unwrap_or(&"")));
+                    log::debug!("{}> {}", state.chat_id, format!("invalid url: {}", cmd.get(1).unwrap_or(&"")));
                     cx.answer_str("invalid url").await?;
                 }
             }
