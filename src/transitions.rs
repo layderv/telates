@@ -4,15 +4,11 @@ use crate::states::*;
 use url::Url;
 use rss::Channel;
 use regex::Regex;
-use std::lazy::SyncLazy;
 use bytes::Bytes;
 use crate::client::Client;
 use rss::validation::Validate;
 
 const MAX_SUBSCRIPTIONS: usize = 100;
-static INTERNAL_IP_SPACE_RE: SyncLazy<Regex> = SyncLazy::new(||
-    Regex::new(r"/(^127\.)|(^192\.168\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^::1$)|(^[fF][cCdD])/").unwrap()
-);
 
 #[teloxide(subtransition)]
 async fn start(_state: StartState, cx: TransitionIn, _ans: String) -> TransitionOut<Dialogue> {
@@ -101,8 +97,7 @@ async fn validate_url(input_url: &str) -> bool {
             let host = url.host_str().unwrap_or("");
             let valid = (url.scheme().eq("http") || url.scheme().eq("https")) &&
                 url.has_host() &&
-                !INTERNAL_IP_SPACE_RE.is_match(host) &&
-                !host.eq("localhost");
+                !is_internal_link(host);
             if valid {
                 let valid_rss = |content: bytes::Bytes|
                     Channel::read_from(&content[..])
@@ -123,4 +118,9 @@ fn can_fetch_url(url: &str) -> reqwest::Result<Bytes> {
         .get(url)
         .send()?
         .bytes()
+}
+
+fn is_internal_link(url: &str) -> bool {
+    let re = Regex::new(r"/(^127\.)|(^192\.168\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^::1$)|(^[fF][cCdD])/").unwrap();
+    re.is_match(url) || url.eq("localhost")
 }

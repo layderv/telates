@@ -52,6 +52,7 @@ impl Refresher {
                 }
             }
 
+            self.last_run = Utc::now();
             thread::sleep(Duration::from_secs(15 * 60)); // 15 min
         }
     }
@@ -99,7 +100,8 @@ impl Refresher {
         for item in channel.items {
             if let Some(date) = item.pub_date {
                 if let Ok(pub_date) = DateTime::parse_from_rfc2822(date.as_str()) {
-                    if pub_date > last_run {
+                    let pub_date_utc: DateTime<Utc> = pub_date.with_timezone(&Utc);
+                    if pub_date_utc > last_run {
                         let link = item.link.unwrap_or(String::from("<no link>"));
                         let descr: String = item.description
                             .map(|s| {

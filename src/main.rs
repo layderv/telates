@@ -1,4 +1,3 @@
-#![feature(once_cell)]
 #[macro_use]
 extern crate derive_more;
 
@@ -39,13 +38,10 @@ async fn main() {
 }
 
 async fn run() {
-    // let mut rt = Runtime::new().unwrap();
     let bot = Bot::from_env();
     let bg_bot = bot.clone();
     thread::spawn(move || {
-        // block_on(
-            Refresher::new(bg_bot).run()
-        // )
+        Refresher::new(bg_bot).run()
     });
     Dispatcher::new(bot)
         .messages_handler(DialogueDispatcher::with_storage(
