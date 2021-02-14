@@ -77,7 +77,7 @@ async fn run(mut state: RunState, cx: TransitionIn, ans: String) -> TransitionOu
         }
         "/unsubscribe" => {
             match cmd.get(1).map(|n| n.parse::<usize>()) {
-                Some(Ok(id)) => {
+                Some(Ok(id)) if id < state.subscriptions.len() => {
                     state.subscriptions.remove(id);
                     cx.answer_str("removed").await?;
                 }

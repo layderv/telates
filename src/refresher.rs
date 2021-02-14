@@ -98,7 +98,7 @@ impl Refresher {
 
     async fn send_messages(bot: Bot, channel: Channel, last_run: DateTime<Utc>, chat_id: i64) -> Result<(), Box<dyn Error>> {
         for item in channel.items {
-            if let Some(date) = item.pub_date {
+            if let Some(date) = item.pub_date() {
                 if let Ok(pub_date) = DateTime::parse_from_rfc2822(date.as_str()) {
                     let pub_date_utc: DateTime<Utc> = pub_date.with_timezone(&Utc);
                     if pub_date_utc > last_run {

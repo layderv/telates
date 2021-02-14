@@ -61,4 +61,3 @@ impl Debug for RunState {
             .finish()
     }
 }
-
